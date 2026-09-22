@@ -37,8 +37,14 @@ wdi_data <- WDI(
   start = 1960,
   end = 2025,
   extra = TRUE
-) |>
+)
+w <- wdi_data |>
   as_tibble() |>
+  select(-lastupdated) |>
+  summarise(
+    across(everything(), ~ first(na.omit(.))),
+    .by = c(country, year)
+  ) |>
   filter(region != "Aggregates") |>
   select(
     country_name = country,
@@ -77,7 +83,7 @@ bmi_data <- gho_resp$value |>
 
 indicator_cols <- c(names(wdi_indicators), "obesity_prevalence_pct")
 
-panel <- wdi_data |>
+panel <- w |>
   left_join(bmi_data, by = c("country_code", "year")) |>
   arrange(country_name, year) |>
   group_by(country_code) |>
@@ -87,9 +93,7 @@ panel <- wdi_data |>
 # Quick sanity checks
 glimpse(panel)
 panel |>
-  summarise(across(where(is.numeric), ~ sum(!is.na(.)))) |>
-  print()
-
+  summarise(across(where(is.numeric), ~ sum(!is.na(.)))) -> s
 # --------------------------------------------------------------
 # 4. Save
 # --------------------------------------------------------------

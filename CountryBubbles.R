@@ -22,6 +22,8 @@
 
 # Package and Data
 library(tidyverse)
+library(ggbeeswarm)
+library(ggridges)
 df <- read_csv("data/country_panel_wdi_who.csv")
 
 # Hans Rosling's Version (with different regions)
@@ -33,7 +35,7 @@ df |>
     size = total_population,
     color = region
   )) +
-  geom_point() +
+  geom_point(alpha = 0.8) +
   scale_x_log10() +
   scale_size_area(max_size = 15) +
   theme_minimal()
@@ -42,12 +44,12 @@ df |>
 df |>
   filter(year == 2018) |>
   ggplot(aes(
-    x = gdp_per_capita_usd,
-    y = life_expectancy_years,
+    x = life_expectancy_years,
+    y = gdp_per_capita_usd,
     size = total_population,
     color = region
   )) +
-  geom_point() +
+  geom_point(alpha = 0.8) +
   scale_size_area(max_size = 15) +
   theme_minimal()
 
@@ -60,15 +62,34 @@ df |>
     size = total_population,
     color = region
   )) +
-  geom_point() +
+  geom_point(alpha = 0.8) +
   scale_x_log10() +
   scale_size_area(max_size = 15) +
   facet_wrap(~year) +
-  theme_minimal() + 
+  theme_minimal() +
   theme(legend.position = "bottom") +
   guides(
     size = "none",
     color = guide_legend(ncol = 2, override.aes = list(size = 4), title = NULL)
   )
 
+df |>
+  filter(year == 2018) |>
+  # ggplot(aes(x = life_expectancy_years, y = region, weight = total_population)) +
+  ggplot(aes(x = life_expectancy_years, y = region)) +
+  geom_density_ridges()
 
+df |>
+  filter(year == 2016, total_population > 10000000) |>
+  summarize(
+    life_expectancy_years = mean(life_expectancy_years),
+    .by = c(country_name, region)
+  ) |>
+  arrange(desc(life_expectancy_years)) |>
+  ggplot(aes(
+    x = life_expectancy_years,
+    y = country_name |> fct_inorder(),
+    fill = region
+  )) +
+  geom_col() +
+  scale_fill_brewer(palette = "Dark2")
