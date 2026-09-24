@@ -27,6 +27,7 @@ library(ggridges)
 df <- read_csv("data/country_panel_wdi_who.csv")
 
 # Hans Rosling's Version (with different regions)
+## Without much styling of label
 df |>
   filter(year == 2018) |>
   ggplot(aes(
@@ -41,6 +42,7 @@ df |>
   theme_minimal()
 
 # Paulsen's version
+## Without much styling of labels
 df |>
   filter(year == 2018) |>
   ggplot(aes(
@@ -53,7 +55,8 @@ df |>
   scale_size_area(max_size = 15) +
   theme_minimal()
 
-# Facetted years
+# Bubble Plots Facetted by years
+## With some styling specs
 df |>
   filter(year %in% c(1988, 1998, 2018)) |>
   ggplot(aes(
@@ -63,33 +66,56 @@ df |>
     color = region
   )) +
   geom_point(alpha = 0.8) +
-  scale_x_log10() +
+  scale_x_log10(breaks = c(300, 3000, 30000)) +
+  scale_y_continuous(limits = c(40, 87)) +
   scale_size_area(max_size = 15) +
   facet_wrap(~year) +
+  labs(x = "GDP per capita (USD)", y = "Life expectancy (years)") +
   theme_minimal() +
-  theme(legend.position = "bottom") +
+  theme(legend.position = "bottom", panel.border = element_rect()) +
   guides(
     size = "none",
-    color = guide_legend(ncol = 2, override.aes = list(size = 4), title = NULL)
+    color = guide_legend(ncol = 4, override.aes = list(size = 4), title = NULL)
   )
 
+
+# Density ridge plots
+## Consider: Uses weight to weight by population in the density plot.
+## What is the difference if we do not weight by population, technically and in interpretation
 df |>
   filter(year == 2018) |>
-  # ggplot(aes(x = life_expectancy_years, y = region, weight = total_population)) +
-  ggplot(aes(x = life_expectancy_years, y = region)) +
-  geom_density_ridges()
-
-df |>
-  filter(year == 2016, total_population > 10000000) |>
-  summarize(
-    life_expectancy_years = mean(life_expectancy_years),
-    .by = c(country_name, region)
-  ) |>
-  arrange(desc(life_expectancy_years)) |>
   ggplot(aes(
     x = life_expectancy_years,
+    y = region,
+    weight = total_population,
+    fill = region
+  )) +
+  geom_density_ridges()
+
+
+# Ranking Plot
+## Filtered fro large countries to allow readability of the list of country names
+df |>
+  filter(year == 2016, total_population > 20000000) |>
+  summarize(
+    mean_var = mean(life_expectancy_years),
+    .by = c(country_name, region)
+  ) |>
+  arrange(mean_var) |>
+  ggplot(aes(
+    x = mean_var,
     y = country_name |> fct_inorder(),
     fill = region
   )) +
   geom_col() +
-  scale_fill_brewer(palette = "Dark2")
+  labs(
+    title = "Life Expectancy, Countries with more than 20 Mio.",
+    x = "",
+    y = ""
+  ) +
+  scale_fill_brewer(palette = "Dark2") +
+  theme_minimal()
+
+# --------------------------------------------------------------
+# YOUR AREA FOR YOU GREAT BUBBLE AND OTHER COUNTRY PLOT
+# --------------------------------------------------------------

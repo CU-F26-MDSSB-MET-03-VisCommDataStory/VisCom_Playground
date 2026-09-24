@@ -5,12 +5,12 @@
 #
 # WDI no longer serves the obesity/overweight family (SH.STA.OB18.ZS etc.)
 # in its live database, so that piece is pulled directly from WHO GHO
-# and merged in by country code (ISO3) + year.
+# and merged in by country code ISO3 and year.
 # ------------------------------------------------------------------
 
-# install.packages(c("WDI", "dplyr", "httr2", "jsonlite", "tibble"))
-library(WDI)
+# install.packages(c("WDI", "httr2", "jsonlite"))
 library(tidyverse)
+library(WDI)
 library(httr2)
 library(jsonlite)
 
@@ -28,17 +28,17 @@ wdi_indicators <- c(
   life_expectancy_years = "SP.DYN.LE00.IN",
   fuel_exports_pct_merch_exports = "TX.VAL.FUEL.ZS.UN",
   fuel_imports_pct_merch_imports = "TM.VAL.FUEL.ZS.UN",
-  voice_accountability_index = "GOV_WGI_VA.EST" # renamed from VA.EST in 2025 WGI revision
+  voice_accountability_index = "GOV_WGI_VA.EST"
 )
 
-wdi_data <- WDI(
+wdi_raw <- WDI(
   indicator = wdi_indicators,
   country = "all",
   start = 1960,
   end = 2025,
   extra = TRUE
 )
-w <- wdi_data |>
+wdi <- wdi_data |>
   as_tibble() |>
   select(-lastupdated) |>
   summarise(
@@ -78,24 +78,16 @@ bmi_data <- gho_resp$value |>
   arrange(country_code, year)
 
 # --------------------------------------------------------------
-# 3. Merge into one panel
+# 3. Merge into one panel and save
 # --------------------------------------------------------------
 
 indicator_cols <- c(names(wdi_indicators), "obesity_prevalence_pct")
 
-panel <- w |>
+panel <- wdi |>
   left_join(bmi_data, by = c("country_code", "year")) |>
   arrange(country_name, year) |>
   group_by(country_code) |>
   fill(all_of(indicator_cols), .direction = "down") |>
   ungroup()
-
-# Quick sanity checks
-glimpse(panel)
-panel |>
-  summarise(across(where(is.numeric), ~ sum(!is.na(.)))) -> s
-# --------------------------------------------------------------
-# 4. Save
-# --------------------------------------------------------------
 
 write_csv(panel, "data/country_panel_wdi_who.csv")
