@@ -11,3 +11,4 @@
     - More **referencing** in the "Bibliograpy Example"
     - A **slide-deck** in the "Presentation"
     - An example of **"Data Scrollytelling"** 
+6. The scripts `CountryBubbles.R` and `WarmingStripes.R` are files with code for producing Visuals. Make your own visuals, and develop a sense for what is needed for a great visual in a data story. 
