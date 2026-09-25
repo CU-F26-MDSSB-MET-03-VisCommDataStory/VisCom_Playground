@@ -6,9 +6,9 @@ website:
   navbar:
     left:
       - index.qmd
+      - bibliography-example.qmd
       - text: "Presentation"
         href: presentation.qmd
-      - bibliography-example.qmd
       - scrollytelling.qmd
 
 format: 
